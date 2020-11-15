@@ -36,7 +36,7 @@ function clean() {
   document.body.innerHTML = "";
 }
 
-describe("Creditas Challenge", () => {
+describe("Creditas Challenge utils", () => {
   beforeEach(() => {
     initializeAppMock();
   });

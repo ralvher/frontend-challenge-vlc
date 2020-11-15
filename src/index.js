@@ -121,7 +121,6 @@ export default class CreditasChallenge {
           .catch((error) => alert("Help is unavailable", error));
         return;
       }
-
       confirm(this.helpMessage);
     });
   }

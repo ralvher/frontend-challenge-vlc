@@ -1,6 +1,9 @@
 import { fireEvent, getByTestId } from "@testing-library/dom";
+import axios from "axios";
 
-import CreditasChallenge, { COLLATERALS, Send } from "../src/index";
+import CreditasChallenge, { COLLATERALS, Send, Help } from "../src/index";
+
+jest.mock("axios");
 
 function initializeAppMock() {
   document.body.innerHTML = `
@@ -87,6 +90,26 @@ describe("Creditas Challenge", () => {
       });
     });
   });
+
+  describe("Help method", () => {
+    it("should return values", () => {
+      axios.get.mockImplementationOnce(() =>
+        Promise.resolve({ data: { text: "Hola" } })
+      );
+      axios.get.mockImplementationOnce(() =>
+        Promise.resolve({ data: { text: "Caracola" } })
+      );
+      Help().then((result) => {
+        expect(result).toBe("Hola\nCaracola");
+      });
+    });
+    it("should fails", () => {
+      Send().catch((err) => {
+        expect(err).toBeDefined();
+      });
+    });
+  });
+
   it("should initialize form values and listeners", () => {
     CreditasChallenge.initialize(COLLATERALS);
     let total = getByTestId(document.body, "total");
@@ -243,5 +266,48 @@ describe("Creditas Challenge", () => {
     const expectedValue = String(secondValueForCollateral * 0.8);
     expect(loanAmount.value).toBe(expectedValue);
     expect(loanAmountRange.value).toBe(expectedValue);
+  });
+
+  it("should call to help and fails", () => {
+    window.alert = jest.fn();
+    window.confirm = jest.fn();
+
+    axios.get.mockImplementationOnce(() => Promise.reject());
+    axios.get.mockImplementationOnce(() => Promise.reject());
+
+    const help = getByTestId(document.body, "help");
+    fireEvent.click(help);
+
+    expect(axios.get).toHaveBeenCalledWith("/api/question");
+    expect(axios.get).toHaveBeenCalledWith("/api/answer");
+  });
+
+  it("should call to help", () => {
+    window.alert = jest.fn();
+    window.confirm = jest.fn();
+
+    axios.get.mockImplementationOnce(() =>
+      Promise.resolve({ data: { text: "Hola" } })
+    );
+    axios.get.mockImplementationOnce(() =>
+      Promise.resolve({ data: { text: "Caracola" } })
+    );
+
+    const help = getByTestId(document.body, "help");
+    fireEvent.click(help);
+
+    expect(axios.get).toHaveBeenCalledWith("/api/question");
+    expect(axios.get).toHaveBeenCalledWith("/api/answer");
+  });
+
+  it("should call to help with emit any call", () => {
+    window.alert = jest.fn();
+    window.confirm = jest.fn();
+
+    const help = getByTestId(document.body, "help");
+    fireEvent.click(help);
+
+    expect(axios.get).not.toHaveBeenCalledWith("/api/question");
+    expect(axios.get).not.toHaveBeenCalledWith("/api/answer");
   });
 });
