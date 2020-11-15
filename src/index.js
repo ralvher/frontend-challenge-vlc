@@ -5,6 +5,8 @@ import {
   toStringFormValues,
 } from "./utils";
 
+import axios from "axios";
+
 import "./styles.css";
 
 export const COLLATERALS = {
@@ -34,6 +36,13 @@ export const Send = (values) => {
       reject(error);
     }
   });
+};
+
+export const Help = () => {
+  return Promise.all([
+    axios.get("/api/question"),
+    axios.get("/api/answer"),
+  ]).then((result) => result.map((r) => r.data.text).join("\n"));
 };
 
 export default class CreditasChallenge {
@@ -103,7 +112,17 @@ export default class CreditasChallenge {
 
   static handleHelp(element) {
     element.addEventListener("click", function (event) {
-      alert("Display here the help text");
+      if (!this.helpMessage) {
+        Help()
+          .then((result) => {
+            this.helpMessage = result;
+            confirm(result);
+          })
+          .catch((error) => alert("Help is unavailable", error));
+        return;
+      }
+
+      confirm(this.helpMessage);
     });
   }
 
