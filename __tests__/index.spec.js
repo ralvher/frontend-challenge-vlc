@@ -1,53 +1,59 @@
-/* <!--
-  =========================================================
-  Que tal aumentar o coverage para que ele comece a passar
-  nos critérios do desafio?
-
-  Objetivo: Alcançar 80% de cobertura, mas não se preocupe
-  se não chegar a alcançar a objetivo, faça o quanto você
-  acha que é necessário para garantir segurança quando um
-  outro amigo for mexer no mesmo código que você :)
-
-  Confira nossas taxas de coberturas atuais :(
-
-  ----------|----------|----------|----------|----------|-------------------|
-  File      |  % Stmts | % Branch |  % Funcs |  % Lines | Uncovered Line #s |
-  ----------|----------|----------|----------|----------|-------------------|
-  All files |    15.79 |        0 |     9.52 |    14.29 |                   |
-  index.js  |    15.79 |        0 |     9.52 |    14.29 |... 72,76,78,83,91 |
-  ----------|----------|----------|----------|----------|-------------------|
-  Jest: Uncovered count for statements (32)exceeds global threshold (10)
-  Jest: "global" coverage threshold for branches (80%) not met: 0%
-  Jest: "global" coverage threshold for lines (80%) not met: 14.29%
-  Jest: "global" coverage threshold for functions (80%) not met: 9.52%
---> */
+import { fireEvent, getByTestId } from "@testing-library/dom";
 
 import CreditasChallenge, { COLLATERALS, Send } from "../src/index";
 
 function initializeAppMock() {
   document.body.innerHTML = `
     <form class="form" data-testid="form">
-      <label for="collateral-value">Collateral Amount</label>
-      <select name="installments" id="installments" required></select>
-      <select name="collateral" id="collateral" required></select>
-      <input id="collateral-value" name="collateral-value" value="1" required />
-      <input name="collateral-value-range" id="collateral-value-range" />
-      <div id="collateral-value-range-values">
-        <span></span>
-        <span></span>
-      </div>
-      <input required name="loan-amount" id="loan-amount" />
-      <input name="loan-amount-range" id="loan-amount-range" />
-      <div id="loan-amount-range-values">
-        <span></span>
-        <span></span>
-      </div>
-      <div id="quota"></div>
-      <div id="rate"></div>
-      <div id="total">1234</div>
-      <button type="button"></button>
-      <div id="help">Help</div>
-    </form>
+    <select
+      name="installments"
+      id="installments"
+      data-testid="installments"
+      required
+    ></select>
+    <select
+      name="collateral"
+      id="collateral"
+      data-testid="collateral"
+      required
+    ></select>
+    <input
+      id="collateral-value"
+      data-testid="collateral-value"
+      name="collateral-value"
+      value="1"
+      required
+    />
+    <input
+      name="collateral-value-range"
+      id="collateral-value-range"
+      data-testid="collateral-value-range"
+    />
+    <div id="collateral-value-range-values">
+      <span></span>
+      <span></span>
+    </div>
+    <input
+      required
+      name="loan-amount"
+      id="loan-amount"
+      data-testid="loan-amount"
+    />
+    <input
+      name="loan-amount-range"
+      id="loan-amount-range"
+      data-testid="loan-amount-range"
+    />
+    <div id="loan-amount-range-values">
+      <span></span>
+      <span></span>
+    </div>
+    <div id="quota" data-testid="quota"></div>
+    <div id="rate" data-testid="rate"></div>
+    <div id="total" data-testid="total">1234</div>
+    <button type="button" data-testid="submit"></button>
+    <div id="help" data-testid="help">Help</div>
+  </form>;
   `;
 }
 
@@ -83,9 +89,9 @@ describe("Creditas Challenge", () => {
   });
   it("should initialize form values and listeners", () => {
     CreditasChallenge.initialize(COLLATERALS);
-    let total = document.getElementById("total");
-    let quota = document.getElementById("quota");
-    let rate = document.getElementById("rate");
+    let total = getByTestId(document.body, "total");
+    let quota = getByTestId(document.body, "quota");
+    let rate = getByTestId(document.body, "rate");
 
     expect(total.textContent).toContain("3,333.60");
     expect(quota.textContent).toContain("138.90");
@@ -93,46 +99,149 @@ describe("Creditas Challenge", () => {
   });
 
   it("should reset form on change collateral", () => {
-    const collateral = document.getElementById("collateral");
-    const event = new Event("change");
-    collateral.dispatchEvent(event);
+    const collateral = getByTestId(document.body, "collateral");
+    fireEvent.change(collateral, { target: { value: "home" } });
+
+    let total = getByTestId(document.body, "total");
+    let quota = getByTestId(document.body, "quota");
+    let rate = getByTestId(document.body, "rate");
+
+    expect(total.textContent).toContain("36,216.00");
+    expect(quota.textContent).toContain("301.80");
+    expect(rate.textContent).toContain("120.72");
   });
 
   it("should have event listener to submit data form", () => {
     window.confirm = jest.fn();
-    const form = document.querySelector(".form");
-    const event = new Event("submit");
-    form.dispatchEvent(event);
+    const form = getByTestId(document.body, "form");
+    fireEvent.submit(form);
   });
 
   it("should have event listener to change data form", () => {
-    window.confirm = jest.fn();
-    const form = document.querySelector(".form");
-    const event = new Event("change");
-    form.dispatchEvent(event);
+    const element = getByTestId(document.body, "installments");
+    fireEvent.change(element, { target: { value: "180" } });
+
+    let total = document.getElementById("total");
+    let quota = document.getElementById("quota");
+
+    expect(total.textContent).toContain("38,016.00");
+    expect(quota.textContent).toContain("211.20");
   });
 
-  it("should have event listener to collateral value", () => {
-    const element = document.getElementById("collateral-value");
-    const event = new Event("change");
-    element.dispatchEvent(event);
+  it("should change collateral value", () => {
+    const value = "600000";
+    const collateralValue = getByTestId(document.body, "collateral-value");
+    fireEvent.change(collateralValue, { target: { value } });
+
+    const collateralValueRange = getByTestId(
+      document.body,
+      "collateral-value-range"
+    );
+
+    expect(collateralValue.value).toBe(value);
+    expect(collateralValueRange.value).toBe(value);
   });
 
-  it("should have event listener to collateral value range", () => {
-    const element = document.getElementById("collateral-value-range");
-    const event = new Event("change");
-    element.dispatchEvent(event);
+  it("should chnage collateral value range", () => {
+    const value = "50000";
+    const collateralValueRange = getByTestId(
+      document.body,
+      "collateral-value-range"
+    );
+    fireEvent.change(collateralValueRange, { target: { value } });
+
+    const collateralValue = getByTestId(document.body, "collateral-value");
+
+    expect(collateralValue.value).toBe(value);
+    expect(collateralValueRange.value).toBe(value);
   });
 
-  it("should have event listener to loan amount", () => {
-    const element = document.getElementById("loan-amount");
-    const event = new Event("change");
-    element.dispatchEvent(event);
+  it("should change loan amount", () => {
+    const value = "60000";
+    const loanAmount = getByTestId(document.body, "loan-amount");
+    fireEvent.change(loanAmount, { target: { value } });
+
+    const collateralValue = getByTestId(document.body, "collateral-value");
+    const loanAmountRange = getByTestId(document.body, "loan-amount-range");
+
+    const expectedValue = String(collateralValue.value * 0.8);
+    expect(loanAmount.value).toBe(expectedValue);
+    expect(loanAmountRange.value).toBe(expectedValue);
   });
 
-  it("should have event listener to collateral value range", () => {
-    const element = document.getElementById("loan-amount-range");
-    const event = new Event("change");
-    element.dispatchEvent(event);
+  it("should change loan amount range", () => {
+    const value = "50000";
+
+    const loanAmountRange = getByTestId(document.body, "loan-amount-range");
+    fireEvent.change(loanAmountRange, { target: { value } });
+
+    const collateralValue = getByTestId(document.body, "collateral-value");
+    const loanAmount = getByTestId(document.body, "loan-amount");
+
+    const expectedValue = String(collateralValue.value * 0.8);
+    expect(loanAmount.value).toBe(expectedValue);
+    expect(loanAmountRange.value).toBe(expectedValue);
+  });
+
+  it("should change loan amount when is greater than 80% of collateral value", () => {
+    const firstValueForCollateral = "60000";
+    const secondValueForCollateral = "50000";
+
+    const collateralValue = getByTestId(document.body, "collateral-value");
+    fireEvent.change(collateralValue, {
+      target: { value: firstValueForCollateral },
+    });
+
+    const valueForLoanAmount = "48000";
+    const loanAmount = getByTestId(document.body, "loan-amount");
+    const loanAmountRange = getByTestId(document.body, "loan-amount-range");
+
+    fireEvent.change(loanAmount, {
+      target: { value: valueForLoanAmount },
+    });
+
+    expect(loanAmount.value).toBe(valueForLoanAmount);
+    expect(loanAmountRange.value).toBe(valueForLoanAmount);
+
+    fireEvent.change(collateralValue, {
+      target: { value: secondValueForCollateral },
+    });
+
+    const expectedValue = String(secondValueForCollateral * 0.8);
+    expect(loanAmount.value).toBe(expectedValue);
+    expect(loanAmountRange.value).toBe(expectedValue);
+  });
+
+  it("should change loan amount when is greater than 80% of collateral value range", () => {
+    const firstValueForCollateral = "55000";
+    const secondValueForCollateral = "50000";
+
+    const collateralValueRange = getByTestId(
+      document.body,
+      "collateral-value-range"
+    );
+
+    fireEvent.change(collateralValueRange, {
+      target: { value: firstValueForCollateral },
+    });
+
+    const valueForLoanAmount = "44000";
+    const loanAmount = getByTestId(document.body, "loan-amount");
+    const loanAmountRange = getByTestId(document.body, "loan-amount-range");
+
+    fireEvent.change(loanAmount, {
+      target: { value: valueForLoanAmount },
+    });
+
+    expect(loanAmount.value).toBe(valueForLoanAmount);
+    expect(loanAmountRange.value).toBe(valueForLoanAmount);
+
+    fireEvent.change(collateralValueRange, {
+      target: { value: secondValueForCollateral },
+    });
+
+    const expectedValue = String(secondValueForCollateral * 0.8);
+    expect(loanAmount.value).toBe(expectedValue);
+    expect(loanAmountRange.value).toBe(expectedValue);
   });
 });
